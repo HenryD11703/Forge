@@ -1,0 +1,11 @@
+node_modules/
+out/
+.vscode-test/
+.env
+backend/.env
+dashboard/.env
+.DS_Store
+dist/
+build/
+dashboard/dist/
+*.log

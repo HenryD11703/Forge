@@ -1,0 +1,57 @@
+{
+  "name": "launchpad",
+  "displayName": "Launchpad",
+  "description": "A rocket that says Hola Mundo",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onView:launchpad.helloWorldView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "launchpad-sidebar",
+          "title": "Launchpad",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "launchpad-sidebar": [
+        {
+          "type": "webview",
+          "id": "launchpad.helloWorldView",
+          "name": "Hola Mundo"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "launchpad.helloWorld",
+        "title": "Launchpad: Hola Mundo"
+      },
+      {
+        "command": "launchpad.resetProgress",
+        "title": "Launchpad: Reiniciar Progreso"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "18.x",
+    "typescript": "^5.1.3"
+  }
+}
