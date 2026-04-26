@@ -1,20 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import pg from 'pg';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
-const { Client } = pg;
-const dbClient = new Client({
-    connectionString: process.env.CONNECTION_STRING,
-    // Supabase usually requires SSL when connecting via connection string
-    ssl: { rejectUnauthorized: false } 
-});
+const supabase = createClient(
+    process.env.PROJECT_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-dbClient.connect()
-    .then(() => console.log("Conectado a la Base de Datos Supabase (PostgreSQL)"))
-    .catch(err => console.error("Error conectando a BD:", err));
+console.log("Servidor configurado con Supabase JS Client (HTTP)");
 
 const app = express();
 app.use(cors());
@@ -24,8 +20,14 @@ const MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";
 
 app.get('/api/exercises', async (req, res) => {
     try {
-        const result = await dbClient.query("SELECT * FROM exercises WHERE status = 'approved' ORDER BY created_at ASC");
-        return res.json(result.rows);
+        const { data, error } = await supabase
+            .from('exercises')
+            .select('*')
+            .eq('status', 'approved')
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return res.json(data);
     } catch (err) {
         console.error("Error al traer ejercicios", err);
         return res.status(500).json({ error: "Error interno del servidor DB" });
@@ -118,20 +120,27 @@ ${exerciseInstruction}`;
         // Si aprobó y nos enviaron metadata del usuario/ejercicio, registrarlo en Supabase
         if (safe.aprobado && exerciseId && githubUsername) {
             try {
-                // 1. Aseguramos que exista el usuario (o lo referenciamos)
-                const userRes = await dbClient.query(
-                    "INSERT INTO users (github_username) VALUES ($1) ON CONFLICT (github_username) DO UPDATE SET github_username = EXCLUDED.github_username RETURNING id", 
-                    [githubUsername]
-                );
-                const userId = userRes.rows[0].id;
+                // 1. Aseguramos que exista el usuario (upsert con github_username)
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .upsert({ github_username: githubUsername }, { onConflict: 'github_username' })
+                    .select('id')
+                    .single();
 
-                // 2. Insertamos el progreso si no existe (gracias a UNIQUE constraints)
-                await dbClient.query(
-                    "INSERT INTO user_progress (user_id, exercise_id) VALUES ($1, $2) ON CONFLICT (user_id, exercise_id) DO NOTHING",
-                    [userId, exerciseId]
-                );
+                if (userError) throw userError;
+                const userId = userData.id;
+
+                // 2. Insertamos el progreso si no existe
+                const { error: progError } = await supabase
+                    .from('user_progress')
+                    .upsert(
+                        { user_id: userId, exercise_id: exerciseId }, 
+                        { onConflict: 'user_id,exercise_id' }
+                    );
+                
+                if (progError) throw progError;
             } catch (dbErr) {
-                console.error("Error al guardar progreso en BD:", dbErr);
+                console.error("Error al guardar progreso en Supabase:", dbErr);
                 // No detenemos la respuesta al usuario, pero logueamos el error.
             }
         }
