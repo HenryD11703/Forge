@@ -10,9 +10,6 @@
     "Other"
   ],
   "icon": "icon.png",
-  "activationEvents": [
-    "onView:launchpad.helloWorldView"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {

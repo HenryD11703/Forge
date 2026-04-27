@@ -10,44 +10,115 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-console.log("Servidor configurado con Supabase JS Client (HTTP)");
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";
 
+// ─── GET /api/modules ─────────────────────────────────────────────────────
+// Devuelve módulos con sus ejercicios y progreso del usuario
+app.get('/api/modules', async (req, res) => {
+    const { githubUsername } = req.query;
+    try {
+        const { data: modules, error: modsErr } = await supabase
+            .from('modules')
+            .select('*')
+            .order('sort_order', { ascending: true });
+        if (modsErr) throw modsErr;
+
+        const { data: exercises, error: exErr } = await supabase
+            .from('exercises')
+            .select('id, slug, title, description, type, sort_order, module_id')
+            .eq('status', 'approved')
+            .order('sort_order', { ascending: true });
+        if (exErr) throw exErr;
+
+        let completedSet = new Set();
+        if (githubUsername) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('github_username', githubUsername)
+                .single();
+            if (userData) {
+                const { data: progress } = await supabase
+                    .from('user_progress')
+                    .select('exercise_id')
+                    .eq('user_id', userData.id);
+                if (progress) progress.forEach(p => completedSet.add(p.exercise_id));
+            }
+        }
+
+        const result = modules.map(module => {
+            const moduleExercises = exercises
+                .filter(ex => ex.module_id === module.id)
+                .map(ex => ({ ...ex, completed: completedSet.has(ex.id) }));
+            return {
+                ...module,
+                exercises: moduleExercises,
+                totalExercises: moduleExercises.length,
+                completedExercises: moduleExercises.filter(e => e.completed).length,
+            };
+        });
+
+        return res.json(result);
+    } catch (err) {
+        console.error("Error en /api/modules:", err);
+        return res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+// ─── GET /api/exercises/:slug ─────────────────────────────────────────────
+app.get('/api/exercises/:slug', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('exercises')
+            .select('*')
+            .eq('slug', req.params.slug)
+            .eq('status', 'approved')
+            .single();
+        if (error) throw error;
+        return res.json(data);
+    } catch (err) {
+        return res.status(404).json({ error: "Ejercicio no encontrado" });
+    }
+});
+
+// ─── Legacy: GET /api/exercises ────────────────────────────────────────────
 app.get('/api/exercises', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('exercises')
             .select('*')
             .eq('status', 'approved')
-            .order('created_at', { ascending: true });
-
+            .order('sort_order', { ascending: true });
         if (error) throw error;
         return res.json(data);
     } catch (err) {
-        console.error("Error al traer ejercicios", err);
         return res.status(500).json({ error: "Error interno del servidor DB" });
     }
 });
 
+// ─── POST /api/evaluate ───────────────────────────────────────────────────
 app.post('/api/evaluate', async (req, res) => {
     const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-        return res.status(500).json({ error: "API key no configurada." });
-    }
+    if (!apiKey) return res.status(500).json({ error: "API key no configurada." });
 
-    const { userCode, exerciseInstruction, exerciseId, githubUsername } = req.body;
+    const { userCode, exerciseInstruction, exerciseId, githubUsername, exerciseType = 'html' } = req.body;
     if (!userCode || !exerciseInstruction) {
         return res.status(400).json({ error: "Faltan campos requeridos." });
     }
 
-    const systemPrompt = `Eres un Senior Software Engineer realizando un Code Review ESTRICTO del código HTML/CSS/JS de un estudiante junior.
-Tu trabajo es auditar el código técnica y profesionalmente. NO toleres errores de sintaxis, falta de etiquetas de cierre, ni omisiones a los criterios.
-REGLA PRINCIPAL: Eres altamente RESTRICTIVO. Si el estudiante no cumple con el 100% de los requisitos, DEBES rechazar el código ("aprobado": false). No seas permisivo.
+    const typeContext = exerciseType === 'js'
+        ? 'código JavaScript puro (sin DOM ni HTML). Evalúa la lógica JS, el uso correcto de APIs del lenguaje y si los resultados son correctos.'
+        : exerciseType === 'terminal'
+        ? 'un archivo de respuestas donde el estudiante documenta sus comandos ejecutados en la terminal/Git. Evalúa que los outputs sean reales y las explicaciones sean correctas.'
+        : 'código HTML/CSS. Evalúa la estructura semántica, etiquetas correctas y estilos aplicados.';
+
+    const systemPrompt = `Eres un Senior Software Engineer haciendo Code Review ESTRICTO de ${typeContext}
+Tu trabajo: auditar técnica y profesionalmente. NO toleres omisiones a los criterios.
+REGLA PRINCIPAL: Eres RESTRICTIVO. Si el estudiante no cumple el 100% de los requisitos → "aprobado": false.
 
 DEVUELVE ÚNICAMENTE un objeto JSON con esta estructura exacta:
 {
@@ -58,11 +129,11 @@ DEVUELVE ÚNICAMENTE un objeto JSON con esta estructura exacta:
   "mensajeGeneral": string
 }
 
-- "aprobado": true SOLO SI cumple estrictamente TODOS los requisitos y el código es válido. false al más mínimo error crítico o ausencia.
-- "cosasBuenas": 1-2 puntos fuertes y verificables del código (si las hay).
-- "cosasMalas": Faltas graves, falta de etiquetas, incumplimiento de los Criterios Exactos. Si "aprobado" es false, esto DEBE tener al menos 1 ítem.
-- "revisar": Sugerencias menores de buenas prácticas.
-- "mensajeGeneral": Resumen contundente de 1 línea. Ej: "Código rechazado: Omitiste el cierre de la etiqueta <p> y falta el <h1>".
+- "aprobado": true SOLO SI cumple estrictamente TODOS los requisitos.
+- "cosasBuenas": 1-2 puntos fuertes verificables.
+- "cosasMalas": Faltas graves. Si aprobado=false, DEBE tener al menos 1 ítem.
+- "revisar": Sugerencias de mejora (no bloqueantes).
+- "mensajeGeneral": Resumen de 1 línea corta.
 
 CRITERIOS EXACTOS DEL EJERCICIO:
 ${exerciseInstruction}`;
@@ -76,7 +147,7 @@ ${exerciseInstruction}`;
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
                 "HTTP-Referer": "http://localhost:3000",
-                "X-Title": "zero-to-junior",
+                "X-Title": "launchpad-gremio",
             },
             body: JSON.stringify({
                 model: MODEL,
@@ -85,7 +156,7 @@ ${exerciseInstruction}`;
                     { role: "user", content: userMessage },
                 ],
                 temperature: 0.3,
-                max_tokens: 600,
+                max_tokens: 700,
                 response_format: { type: "json_object" },
             }),
         });
@@ -97,17 +168,11 @@ ${exerciseInstruction}`;
 
         const data = await response.json();
         const rawContent = data.choices?.[0]?.message?.content;
-
-        if (!rawContent) {
-            return res.status(502).json({ error: "Respuesta vacía de la IA." });
-        }
+        if (!rawContent) return res.status(502).json({ error: "Respuesta vacía de la IA." });
 
         let parsed;
-        try {
-            parsed = JSON.parse(rawContent);
-        } catch {
-            return res.status(502).json({ error: "La IA devolvió JSON inválido." });
-        }
+        try { parsed = JSON.parse(rawContent); }
+        catch { return res.status(502).json({ error: "La IA devolvió JSON inválido." }); }
 
         const safe = {
             aprobado: Boolean(parsed.aprobado),
@@ -117,31 +182,23 @@ ${exerciseInstruction}`;
             mensajeGeneral: parsed.mensajeGeneral || "",
         };
 
-        // Si aprobó y nos enviaron metadata del usuario/ejercicio, registrarlo en Supabase
         if (safe.aprobado && exerciseId && githubUsername) {
             try {
-                // 1. Aseguramos que exista el usuario (upsert con github_username)
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .upsert({ github_username: githubUsername }, { onConflict: 'github_username' })
                     .select('id')
                     .single();
-
                 if (userError) throw userError;
-                const userId = userData.id;
 
-                // 2. Insertamos el progreso si no existe
-                const { error: progError } = await supabase
+                await supabase
                     .from('user_progress')
                     .upsert(
-                        { user_id: userId, exercise_id: exerciseId }, 
+                        { user_id: userData.id, exercise_id: exerciseId },
                         { onConflict: 'user_id,exercise_id' }
                     );
-                
-                if (progError) throw progError;
             } catch (dbErr) {
-                console.error("Error al guardar progreso en Supabase:", dbErr);
-                // No detenemos la respuesta al usuario, pero logueamos el error.
+                console.error("Error al guardar progreso:", dbErr);
             }
         }
 
