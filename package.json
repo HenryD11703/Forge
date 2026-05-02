@@ -1,14 +1,17 @@
 {
-  "name": "launchpad",
-  "displayName": "Launchpad",
-  "description": "A rocket that says Hola Mundo",
-  "version": "0.0.1",
+  "name": "launchpad-campuslands",
+  "displayName": "Launchpad Campuslands",
+  "description": "Plataforma interactiva de aprendizaje web para el bootcamp de Campuslands. Aprende HTML, CSS, JavaScript y Git con ejercicios guiados y evaluación con IA.",
+  "version": "1.0.0",
+  "publisher": "HenryQuel",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
+    "Education",
     "Other"
   ],
+  "keywords": ["html", "css", "javascript", "bootcamp", "aprender", "campuslands"],
   "icon": "icon.png",
   "main": "./out/extension.js",
   "contributes": {
@@ -16,7 +19,7 @@
       "activitybar": [
         {
           "id": "launchpad-sidebar",
-          "title": "Launchpad",
+          "title": "Launchpad Campuslands",
           "icon": "icon.png"
         }
       ]
@@ -26,14 +29,14 @@
         {
           "type": "webview",
           "id": "launchpad.helloWorldView",
-          "name": "Hola Mundo"
+          "name": "Misiones"
         }
       ]
     },
     "commands": [
       {
         "command": "launchpad.helloWorld",
-        "title": "Launchpad: Hola Mundo"
+        "title": "Launchpad: Inicio"
       },
       {
         "command": "launchpad.resetProgress",

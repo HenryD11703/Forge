@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'https://launchpad-0akv.onrender.com/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 interface Exercise {
@@ -43,7 +43,9 @@ interface ExerciseDetail {
 export function activate(context: vscode.ExtensionContext) {
     const provider = new LaunchpadViewProvider(context);
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(LaunchpadViewProvider.viewType, provider)
+        vscode.window.registerWebviewViewProvider(LaunchpadViewProvider.viewType, provider, {
+            webviewOptions: { retainContextWhenHidden: true },
+        })
     );
 
     context.subscriptions.push(
@@ -106,6 +108,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
     private async _checkAuthSilently(_webview: vscode.Webview) {
         if (this._githubUsername) {
             await this._loadAndSendModules();
+            await this._tryRestoreActiveExercise();
             return;
         }
         // VS Code stores sessions keyed by scopes — try common scope combos
@@ -129,6 +132,30 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
             } catch { /* try next */ }
         }
         // No existing session found — stay on login screen
+    }
+
+    private async _tryRestoreActiveExercise() {
+        const saved = this._context.globalState.get<{ slug: string; folderPath: string }>('activeExercise');
+        if (!saved) { return; }
+        const mainFile = fs.existsSync(path.join(saved.folderPath, 'index.html'))
+            ? path.join(saved.folderPath, 'index.html')
+            : fs.existsSync(path.join(saved.folderPath, 'mision.js'))
+                ? path.join(saved.folderPath, 'mision.js')
+                : fs.existsSync(path.join(saved.folderPath, 'respuestas.md'))
+                    ? path.join(saved.folderPath, 'respuestas.md')
+                    : null;
+        if (!mainFile) { return; }
+        try {
+            const res = await fetch(API_BASE + '/exercises/' + saved.slug);
+            if (!res.ok) { return; }
+            const exercise = await res.json() as ExerciseDetail;
+            this._activeExercise = exercise;
+            this._activeWorkspaceFolder = saved.folderPath;
+            this._send({
+                command: 'exerciseStarted',
+                exercise: { id: exercise.id, title: exercise.title, description: exercise.description, type: exercise.type, slug: exercise.slug },
+            });
+        } catch { /* silently skip — server may not be running */ }
     }
 
     private async _login(webview: vscode.Webview) {
@@ -170,7 +197,9 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
     private async _logout() {
         this._githubUsername = undefined;
         this._activeExercise = undefined;
+        this._activeWorkspaceFolder = undefined;
         await this._context.globalState.update('githubUsername', undefined);
+        await this._context.globalState.update('activeExercise', undefined);
         this._send({ command: 'loggedOut' });
     }
 
@@ -203,23 +232,33 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
                 this._send({ command: 'error', text: 'Abre una carpeta en VS Code antes de iniciar.' });
                 return;
             }
-            this._activeWorkspaceFolder = folders[0].uri.fsPath;
+            const exerciseFolder = path.join(folders[0].uri.fsPath, exercise.slug);
+            fs.mkdirSync(exerciseFolder, { recursive: true });
+            this._activeWorkspaceFolder = exerciseFolder;
+            await this._context.globalState.update('activeExercise', {
+                slug: exercise.slug,
+                folderPath: exerciseFolder,
+            });
 
             if (exercise.type === 'html') {
-                fs.writeFileSync(path.join(this._activeWorkspaceFolder, 'index.html'), exercise.html_template, 'utf-8');
-                fs.writeFileSync(path.join(this._activeWorkspaceFolder, 'style.css'), exercise.css_template || '', 'utf-8');
-                const doc = await vscode.workspace.openTextDocument(path.join(this._activeWorkspaceFolder, 'index.html'));
+                const htmlPath = path.join(exerciseFolder, 'index.html');
+                const cssPath  = path.join(exerciseFolder, 'style.css');
+                if (!fs.existsSync(htmlPath)) { fs.writeFileSync(htmlPath, exercise.html_template, 'utf-8'); }
+                if (!fs.existsSync(cssPath))  { fs.writeFileSync(cssPath,  exercise.css_template || '', 'utf-8'); }
+                const doc = await vscode.workspace.openTextDocument(htmlPath);
                 await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One });
             } else if (exercise.type === 'js') {
-                fs.writeFileSync(path.join(this._activeWorkspaceFolder, 'mision.js'), exercise.html_template, 'utf-8');
-                const doc = await vscode.workspace.openTextDocument(path.join(this._activeWorkspaceFolder, 'mision.js'));
+                const jsPath = path.join(exerciseFolder, 'mision.js');
+                if (!fs.existsSync(jsPath)) { fs.writeFileSync(jsPath, exercise.html_template, 'utf-8'); }
+                const doc = await vscode.workspace.openTextDocument(jsPath);
                 await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One });
-                vscode.window.showInformationMessage('Prueba tu código con: node mision.js');
+                vscode.window.showInformationMessage(`Prueba tu código con: node ${exercise.slug}/mision.js`);
             } else if (exercise.type === 'terminal') {
-                fs.writeFileSync(path.join(this._activeWorkspaceFolder, 'respuestas.md'), exercise.html_template, 'utf-8');
-                const doc = await vscode.workspace.openTextDocument(path.join(this._activeWorkspaceFolder, 'respuestas.md'));
+                const mdPath = path.join(exerciseFolder, 'respuestas.md');
+                if (!fs.existsSync(mdPath)) { fs.writeFileSync(mdPath, exercise.html_template, 'utf-8'); }
+                const doc = await vscode.workspace.openTextDocument(mdPath);
                 await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One });
-                const term = vscode.window.createTerminal({ name: 'Terminal Git', cwd: this._activeWorkspaceFolder });
+                const term = vscode.window.createTerminal({ name: 'Terminal Git', cwd: exerciseFolder });
                 term.show();
             }
 
