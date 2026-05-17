@@ -195,5 +195,5 @@ ${exerciseInstruction}`;
     }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Servidor de IA corriendo en http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Forge backend corriendo en puerto ${PORT}`));
