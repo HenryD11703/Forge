@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(mv /home/henryq/Launchpad/backend/*.cjs /home/henryq/Launchpad/backend/scripts/)",
+      "Bash(mv /home/henryq/Launchpad/backend/*.mjs /home/henryq/Launchpad/backend/scripts/)",
+      "Bash(mv /home/henryq/Launchpad/backend/*.sql /home/henryq/Launchpad/backend/scripts/)"
+    ]
+  }
+}

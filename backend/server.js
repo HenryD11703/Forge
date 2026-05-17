@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import Groq from 'groq-sdk';
 
 dotenv.config();
 
@@ -10,11 +11,13 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MODEL = "google/gemini-2.5-flash-lite-preview-09-2025";
+const MODEL = "llama-3.3-70b-versatile";
 
 // ─── GET /api/modules ─────────────────────────────────────────────────────
 // Devuelve módulos con sus ejercicios y progreso del usuario
@@ -102,8 +105,7 @@ app.get('/api/exercises', async (req, res) => {
 
 // ─── POST /api/evaluate ───────────────────────────────────────────────────
 app.post('/api/evaluate', async (req, res) => {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "API key no configurada." });
+    if (!process.env.GROQ_API_KEY) return res.status(500).json({ error: "API key no configurada." });
 
     const { userCode, exerciseInstruction, exerciseId, githubUsername, exerciseType = 'html' } = req.body;
     if (!userCode || !exerciseInstruction) {
@@ -141,33 +143,18 @@ ${exerciseInstruction}`;
     const userMessage = `CÓDIGO DEL ESTUDIANTE:\n\`\`\`\n${userCode}\n\`\`\``;
 
     try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:3000",
-                "X-Title": "launchpad-gremio",
-            },
-            body: JSON.stringify({
-                model: MODEL,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: userMessage },
-                ],
-                temperature: 0.3,
-                max_tokens: 700,
-                response_format: { type: "json_object" },
-            }),
+        const completion = await groq.chat.completions.create({
+            model: MODEL,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userMessage },
+            ],
+            temperature: 0.3,
+            max_tokens: 700,
+            response_format: { type: "json_object" },
         });
 
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            return res.status(502).json({ error: errData?.error?.message || `OpenRouter error ${response.status}` });
-        }
-
-        const data = await response.json();
-        const rawContent = data.choices?.[0]?.message?.content;
+        const rawContent = completion.choices?.[0]?.message?.content;
         if (!rawContent) return res.status(502).json({ error: "Respuesta vacía de la IA." });
 
         let parsed;

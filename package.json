@@ -1,7 +1,7 @@
 {
-  "name": "launchpad-campuslands",
-  "displayName": "Launchpad Campuslands",
-  "description": "Plataforma interactiva de aprendizaje web para el bootcamp de Campuslands. Aprende HTML, CSS, JavaScript y Git con ejercicios guiados y evaluación con IA.",
+  "name": "forge-dev",
+  "displayName": "Forge",
+  "description": "Forja tu carrera como desarrollador. Aprende HTML, CSS, JavaScript y Git con ejercicios guiados y evaluación con IA.",
   "version": "1.0.0",
   "publisher": "HenryQuel",
   "engines": {
@@ -11,7 +11,7 @@
     "Education",
     "Other"
   ],
-  "keywords": ["html", "css", "javascript", "bootcamp", "aprender", "campuslands"],
+  "keywords": ["html", "css", "javascript", "git", "aprender", "forge", "dev"],
   "icon": "icon.png",
   "main": "./out/extension.js",
   "contributes": {
@@ -19,7 +19,7 @@
       "activitybar": [
         {
           "id": "launchpad-sidebar",
-          "title": "Launchpad Campuslands",
+          "title": "Forge",
           "icon": "icon.png"
         }
       ]
