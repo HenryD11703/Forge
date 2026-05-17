@@ -1,9 +1,11 @@
 {
   "name": "forge-dev",
-  "displayName": "Forge",
+  "repository": "https://github.com/HenryD11703/Launchpad",
+  "displayName": "Forge - Learn to Code",
   "description": "Forja tu carrera como desarrollador. Aprende HTML, CSS, JavaScript y Git con ejercicios guiados y evaluación con IA.",
   "version": "1.0.0",
-  "publisher": "HenryQuel",
+  "publisher": "HenryDavidQuel",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -11,7 +13,15 @@
     "Education",
     "Other"
   ],
-  "keywords": ["html", "css", "javascript", "git", "aprender", "forge", "dev"],
+  "keywords": [
+    "html",
+    "css",
+    "javascript",
+    "git",
+    "aprender",
+    "forge",
+    "dev"
+  ],
   "icon": "icon.png",
   "main": "./out/extension.js",
   "contributes": {

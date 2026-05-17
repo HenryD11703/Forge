@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const API_BASE = 'https://launchpad-0akv.onrender.com/api';
+const API_BASE = 'https://octopus-app-bxlw9.ondigitalocean.app/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 interface Exercise {
