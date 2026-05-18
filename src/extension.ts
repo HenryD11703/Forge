@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('forge.start', () => {
-            vscode.window.showInformationMessage('🚀 Forge: ¡Listo para despegar!');
+            vscode.window.showInformationMessage('Forge: ¡Listo para despegar!');
         })
     );
 
