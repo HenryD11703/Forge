@@ -67,7 +67,7 @@ Forge es una extensión de VS Code que convierte tu editor en una plataforma de 
 ### Pasos
 
 ```bash
-git clone https://github.com/HenryD11703/Launchpad.git
+git clone https://github.com/HenryD11703/Forge.git
 cd Launchpad
 npm install
 npm run compile
@@ -88,8 +88,8 @@ Abre el proyecto en VS Code y presiona `F5` para lanzar una ventana de extensió
 
 | Comando | Descripción |
 |---------|-------------|
-| `Launchpad: Inicio` | Abre el panel de Forge |
-| `Launchpad: Reiniciar Progreso` | Borra la sesión guardada localmente |
+| `Forge: Inicio` | Abre el panel de Forge |
+| `Forge: Reiniciar Progreso` | Borra la sesión guardada localmente |
 
 ---
 

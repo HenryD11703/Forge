@@ -36,28 +36,30 @@ interface ExerciseDetail {
     type: 'html' | 'js' | 'terminal';
     html_template: string;
     css_template: string;
+    js_template: string;
     instruction_for_ai: string;
+    hints: string[];
 }
 
 // ─── Activate ─────────────────────────────────────────────────────────────
 export function activate(context: vscode.ExtensionContext) {
-    const provider = new LaunchpadViewProvider(context);
+    const provider = new ForgeViewProvider(context);
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(LaunchpadViewProvider.viewType, provider, {
+        vscode.window.registerWebviewViewProvider(ForgeViewProvider.viewType, provider, {
             webviewOptions: { retainContextWhenHidden: true },
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('launchpad.helloWorld', () => {
-            vscode.window.showInformationMessage('🚀 Launchpad: ¡Listo para despegar!');
+        vscode.commands.registerCommand('forge.start', () => {
+            vscode.window.showInformationMessage('🚀 Forge: ¡Listo para despegar!');
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('launchpad.resetProgress', async () => {
+        vscode.commands.registerCommand('forge.resetProgress', async () => {
             await context.globalState.update('githubUsername', undefined);
-            vscode.window.showInformationMessage('Launchpad: Progreso reiniciado. Recarga la ventana.');
+            vscode.window.showInformationMessage('Forge: Progreso reiniciado. Recarga la ventana.');
         })
     );
 }
@@ -65,8 +67,8 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {}
 
 // ─── Provider ─────────────────────────────────────────────────────────────
-class LaunchpadViewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'launchpad.helloWorldView';
+class ForgeViewProvider implements vscode.WebviewViewProvider {
+    public static readonly viewType = 'forge.mainView';
 
     private _view?: vscode.WebviewView;
     private _githubUsername: string | undefined;
@@ -87,7 +89,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
             enableScripts: true,
             localResourceRoots: [this._context.extensionUri],
         };
-        webviewView.title = 'Launchpad';
+        webviewView.title = 'Forge';
         webviewView.webview.html = this._buildHtml(webviewView.webview);
 
         webviewView.webview.onDidReceiveMessage(async (msg) => {
@@ -189,7 +191,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
             await this._loadAndSendModules();
         } catch (err: any) {
             const msg = err?.message ?? String(err);
-            vscode.window.showErrorMessage('Launchpad auth error: ' + msg);
+            vscode.window.showErrorMessage('Forge auth error: ' + msg);
             webview.postMessage({ command: 'error', text: 'Error de autenticación: ' + msg });
         }
     }
@@ -228,7 +230,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
 
             const folders = vscode.workspace.workspaceFolders;
             if (!folders?.length) {
-                vscode.window.showErrorMessage('Launchpad: Abre una carpeta de trabajo primero.');
+                vscode.window.showErrorMessage('Forge: Abre una carpeta de trabajo primero.');
                 this._send({ command: 'error', text: 'Abre una carpeta en VS Code antes de iniciar.' });
                 return;
             }
@@ -249,7 +251,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
                 await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One });
             } else if (exercise.type === 'js') {
                 const jsPath = path.join(exerciseFolder, 'mision.js');
-                if (!fs.existsSync(jsPath)) { fs.writeFileSync(jsPath, exercise.html_template, 'utf-8'); }
+                if (!fs.existsSync(jsPath)) { fs.writeFileSync(jsPath, exercise.js_template, 'utf-8'); }
                 const doc = await vscode.workspace.openTextDocument(jsPath);
                 await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One });
                 vscode.window.showInformationMessage(`Prueba tu código con: node ${exercise.slug}/mision.js`);
@@ -264,7 +266,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
 
             this._send({
                 command: 'exerciseStarted',
-                exercise: { id: exercise.id, title: exercise.title, description: exercise.description, type: exercise.type, slug: exercise.slug },
+                exercise: { id: exercise.id, title: exercise.title, description: exercise.description, type: exercise.type, slug: exercise.slug, hints: exercise.hints ?? [] },
             });
         } catch (err: any) {
             this._send({ command: 'error', text: err.message });
@@ -340,7 +342,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${csp}; script-src ${csp} 'unsafe-inline';">
-<title>Launchpad</title>
+<title>Forge</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--vscode-sideBar-background, var(--vscode-editor-background)); color: var(--vscode-foreground); font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif); font-size: var(--vscode-font-size, 13px); min-height: 100vh; }
@@ -417,6 +419,17 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
   .spinner { width: 22px; height: 22px; border: 2px solid var(--vscode-widget-border, #444); border-top-color: var(--vscode-progressBar-background, #007ACC); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .err-box { background: var(--vscode-inputValidation-errorBackground, rgba(255,0,0,0.1)); border: 1px solid var(--vscode-inputValidation-errorBorder, #F44336); border-radius: 4px; padding: 8px 10px; font-size: 11px; color: var(--vscode-inputValidation-errorForeground, #F44336); line-height: 1.5; margin-top: 8px; }
+  .hints-sep { border-top: 1px solid var(--vscode-widget-border, #333); margin: 10px 0; }
+  .hints-hdr { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+  .hints-ttl { font-size: 11px; font-weight: 700; color: var(--vscode-descriptionForeground); text-transform: uppercase; letter-spacing: .5px; flex: 1; }
+  .hints-prog { font-size: 10px; color: var(--vscode-descriptionForeground); }
+  .hint-item { background: var(--vscode-textBlockQuote-background, rgba(255,255,255,0.04)); border-left: 2px solid var(--vscode-textLink-foreground); border-radius: 0 4px 4px 0; padding: 8px 10px; margin-bottom: 6px; animation: fadeIn 0.25s ease; }
+  .hint-n { font-size: 9px; font-weight: 700; color: var(--vscode-textLink-foreground); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+  .hint-txt { font-size: 11px; line-height: 1.6; }
+  .hint-txt code { background: var(--vscode-textCodeBlock-background, rgba(255,255,255,0.1)); padding: 1px 4px; border-radius: 3px; font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; }
+  .btn-hint { width: 100%; padding: 7px; background: transparent; color: var(--vscode-textLink-foreground); border: 1px solid var(--vscode-textLink-foreground); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
+  .btn-hint:hover { background: var(--vscode-list-hoverBackground); }
+  .hints-done { font-size: 11px; color: var(--vscode-testing-iconPassed, #4CAF50); text-align: center; padding: 6px; display: none; }
 </style>
 </head>
 <body>
@@ -425,7 +438,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
 <div class="view active" id="vLogin">
   <div class="login-wrap">
     <div class="launch-icon">\u{1F680}</div>
-    <div class="login-title">Launchpad</div>
+    <div class="login-title">Forge</div>
     <div class="login-sub">Tu plataforma de aprendizaje.<br>Con\u00e9ctate con GitHub para despegar.</div>
     <button id="loginBtn" class="btn-github">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -443,7 +456,7 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
     <div class="brand">
       <span class="brand-icon">\u{1F680}</span>
       <div>
-        <div class="brand-title">Launchpad</div>
+        <div class="brand-title">Forge</div>
         <div class="brand-sub">Misiones de aprendizaje</div>
       </div>
     </div>
@@ -468,6 +481,13 @@ class LaunchpadViewProvider implements vscode.WebviewViewProvider {
     <div class="instr-box" id="exInstr"></div>
     <button class="btn-validate" id="validateBtn">\u{1F6F8} Validar Misi\u00f3n</button>
     <div id="resultArea"></div>
+    <div id="hintsSection" style="display:none">
+      <div class="hints-sep"></div>
+      <div class="hints-hdr"><span>\ud83d\udca1</span><span class="hints-ttl">Pistas</span><span class="hints-prog" id="hintsProg"></span></div>
+      <div id="hintsContainer"></div>
+      <button class="btn-hint" id="hintBtn">Revelar siguiente pista</button>
+      <div class="hints-done" id="hintsDone">\u2713 Todas las pistas reveladas</div>
+    </div>
   </div>
 </div>
 

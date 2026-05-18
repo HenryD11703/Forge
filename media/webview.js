@@ -121,14 +121,43 @@
     document.getElementById('resultArea').innerHTML = '';
     var vBtn = document.getElementById('validateBtn');
     vBtn.disabled = false;
-    vBtn.textContent = '\uD83D\uDEF8 Validar Misión';
+    vBtn.textContent = '🛸 Validar Misión';
+
+    // Hints
+    var hints = ex.hints || [];
+    var hs = document.getElementById('hintsSection');
+    var hc = document.getElementById('hintsContainer');
+    var hb = document.getElementById('hintBtn');
+    var hd = document.getElementById('hintsDone');
+    var hp = document.getElementById('hintsProg');
+    hc.innerHTML = '';
+    hd.style.display = 'none';
+    var revealed = 0;
+    if (hints.length > 0) {
+      hs.style.display = 'block';
+      hp.textContent = '0 / ' + hints.length;
+      hb.style.display = 'block';
+      hb.onclick = function () {
+        if (revealed >= hints.length) { return; }
+        var d = document.createElement('div');
+        d.className = 'hint-item';
+        d.innerHTML = '<div class="hint-n">Pista ' + (revealed + 1) + ' de ' + hints.length + '</div><div class="hint-txt">' + hints[revealed] + '</div>';
+        hc.appendChild(d);
+        revealed++;
+        hp.textContent = revealed + ' / ' + hints.length;
+        if (revealed >= hints.length) { hb.style.display = 'none'; hd.style.display = 'block'; }
+      };
+    } else {
+      hs.style.display = 'none';
+    }
+
     show('vExercise');
   }
 
   function renderResult(r) {
     var vBtn = document.getElementById('validateBtn');
     vBtn.disabled = false;
-    vBtn.textContent = '\uD83D\uDEF8 Validar Misión';
+    vBtn.textContent = '🛸 Validar Misión';
     var pass = r.aprobado;
     var html = '<div class="result-box ' + (pass ? 'pass' : 'fail') + '">'
       + '<div class="result-hdr"><span class="result-icon">' + (pass ? '🏆' : '🔴') + '</span>'

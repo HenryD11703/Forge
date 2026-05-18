@@ -1,9 +1,9 @@
 {
   "name": "forge-dev",
-  "repository": "https://github.com/HenryD11703/Launchpad",
+  "repository": "https://github.com/HenryD11703/Forge",
   "displayName": "Forge - Learn to Code",
   "description": "Forja tu carrera como desarrollador. Aprende HTML, CSS, JavaScript y Git con ejercicios guiados y evaluación con IA.",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "publisher": "HenryDavidQuel",
   "license": "MIT",
   "engines": {
@@ -28,29 +28,29 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "launchpad-sidebar",
+          "id": "forge-sidebar",
           "title": "Forge",
           "icon": "icon.png"
         }
       ]
     },
     "views": {
-      "launchpad-sidebar": [
+      "forge-sidebar": [
         {
           "type": "webview",
-          "id": "launchpad.helloWorldView",
+          "id": "forge.mainView",
           "name": "Misiones"
         }
       ]
     },
     "commands": [
       {
-        "command": "launchpad.helloWorld",
-        "title": "Launchpad: Inicio"
+        "command": "forge.start",
+        "title": "Forge: Inicio"
       },
       {
-        "command": "launchpad.resetProgress",
-        "title": "Launchpad: Reiniciar Progreso"
+        "command": "forge.resetProgress",
+        "title": "Forge: Reiniciar Progreso"
       }
     ]
   },
