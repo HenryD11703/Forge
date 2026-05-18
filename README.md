@@ -1,107 +1,84 @@
-# 🚀 Forge — Learn to Code
+# Forge — Learn to Code
 
-> Forja tu carrera como desarrollador directamente desde VS Code.
+Aprende HTML, CSS, JavaScript y Git directamente desde VS Code. Forge te da misiones reales, evaluación automática con IA y pistas cuando te atascas — sin salir de tu editor.
 
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/HenryDavidQuel.forge-dev?label=VS%20Code%20Marketplace&color=0078d7)](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/HenryDavidQuel.forge-dev)](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
+[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-0078d7?logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors)](https://github.com/sponsors/HenryD11703)
-
-Forge es una extensión de VS Code que convierte tu editor en una plataforma de aprendizaje interactivo. Aprende **HTML**, **CSS**, **JavaScript** y **Git** completando misiones guiadas con evaluación automática mediante IA.
+[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-%23ea4aaa?logo=github-sponsors)](https://github.com/sponsors/HenryD11703)
 
 ---
 
-## ✨ Características
-
-- **Misiones progresivas** — ejercicios organizados en módulos con dificultad creciente
-- **Evaluación con IA** — tu código es revisado por un modelo de lenguaje que te da feedback detallado
-- **3 tipos de ejercicios** — HTML/CSS, JavaScript puro y comandos de terminal/Git
-- **Progreso persistente** — tu avance se guarda por usuario con tu cuenta de GitHub
-- **Todo dentro de VS Code** — sin salir de tu editor
+![Demo Forge](https://raw.githubusercontent.com/HenryD11703/Forge/main/imgs/image.png)
 
 ---
 
-## 🚀 Instalación
+## Qué hace
 
-**Opción A — Marketplace:**
-[→ Instalar desde VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
+Forge convierte VS Code en una plataforma de aprendizaje interactivo. Cada misión abre los archivos que necesitas, tú escribes el código, y cuando estás listo presionas **Validar Misión**. Un modelo de lenguaje revisa tu solución y te da feedback específico sobre qué está bien y qué mejorar.
 
-**Opción B — Desde VS Code:**
-1. Abre VS Code
-2. Ve a la pestaña de Extensiones (`Ctrl+Shift+X`)
-3. Busca **Forge - Learn to Code**
-4. Haz clic en **Instalar**
+Si te quedas atascado, puedes revelar pistas una a una desde el mismo panel, sin tener que salir a buscar documentación.
 
----
+Todo el progreso se guarda en tu cuenta de GitHub, así que puedes continuar desde cualquier computadora.
 
-## 📖 Cómo usar
+## Instalación
 
-1. Haz clic en el ícono de Forge en la barra lateral
-2. Inicia sesión con tu cuenta de **GitHub**
+Busca **Forge - Learn to Code** en la pestaña de Extensiones de VS Code (`Ctrl+Shift+X`) o instala directamente desde el Marketplace:
+
+[Instalar Forge](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
+
+## Cómo usarlo
+
+1. Abre el panel de Forge desde la barra lateral
+2. Inicia sesión con tu cuenta de GitHub
 3. Elige un módulo y selecciona una misión
 4. Escribe tu solución en el archivo que se abre automáticamente
-5. Haz clic en **Validar Misión** cuando estés listo
+5. Presiona **Validar Misión** cuando estés listo
 
-### Tipos de ejercicios
+Hay tres tipos de ejercicios:
 
-| Tipo | Archivo | Cómo probarlo |
-|------|---------|---------------|
-| **HTML/CSS** | `index.html` + `style.css` | Abre en el navegador |
-| **JavaScript** | `mision.js` | `node <slug>/mision.js` en la terminal |
-| **Terminal/Git** | `respuestas.md` | Terminal integrada que se abre automáticamente |
+| Tipo | Archivo generado | Cómo probarlo |
+|---|---|---|
+| HTML / CSS | `index.html` + `style.css` | Abre en el navegador con Live Server |
+| JavaScript | `mision.js` | `node mision.js` en la terminal |
+| Terminal / Git | `respuestas.md` | Sigue las instrucciones en el archivo |
 
----
-
-## 🛠️ Stack técnico
+## Stack
 
 | Capa | Tecnología |
-|------|-----------|
+|---|---|
 | Extensión | TypeScript + VS Code API |
-| Backend | Express.js |
-| Base de datos | Supabase |
-| IA | Groq / Llama 3.3 70B |
-| Despliegue | DigitalOcean |
-| Auth | GitHub OAuth (vía VS Code) |
+| Backend | Express.js en DigitalOcean |
+| Base de datos | Supabase (PostgreSQL) |
+| Evaluación IA | Groq — Llama 3.3 70B |
+| Auth | GitHub OAuth |
 
----
+## Desarrollo local
 
-## 🔧 Desarrollo local
-
-### Requisitos
-
-- Node.js 18+
-- VS Code 1.80+
-- Backend de Forge corriendo localmente o en DigitalOcean
-
-### Pasos
+Requisitos: Node.js 18+, VS Code 1.80+
 
 ```bash
 git clone https://github.com/HenryD11703/Forge.git
-cd Launchpad
+cd Forge
 npm install
 npm run compile
 ```
 
-Abre el proyecto en VS Code y presiona `F5` para lanzar una ventana de extensión de desarrollo.
-
-### Comandos disponibles
+Presiona `F5` en VS Code para abrir una ventana de extensión de desarrollo.
 
 | Comando | Descripción |
-|---------|-------------|
-| `npm run compile` | Compila TypeScript |
-| `npm run watch` | Modo watch para desarrollo |
+|---|---|
+| `npm run compile` | Compila TypeScript una vez |
+| `npm run watch` | Recompila automáticamente al guardar |
 
----
+Para contribuir o levantar el backend localmente, revisa [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## 📋 Comandos de la extensión
+## Comandos de la extensión
 
 | Comando | Descripción |
-|---------|-------------|
-| `Forge: Inicio` | Abre el panel de Forge |
+|---|---|
+| `Forge: Inicio` | Abre el panel principal |
 | `Forge: Reiniciar Progreso` | Borra la sesión guardada localmente |
 
----
+## Licencia
 
-## 📄 Licencia
-
-[MIT](LICENSE) © 2026 Henry David Quel
+[MIT](LICENSE) — Henry David Quel, 2026
