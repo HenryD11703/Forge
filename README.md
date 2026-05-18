@@ -2,6 +2,11 @@
 
 > Forja tu carrera como desarrollador directamente desde VS Code.
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/HenryDavidQuel.forge-dev?label=VS%20Code%20Marketplace&color=0078d7)](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/HenryDavidQuel.forge-dev)](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors)](https://github.com/sponsors/HenryD11703)
+
 Forge es una extensión de VS Code que convierte tu editor en una plataforma de aprendizaje interactivo. Aprende **HTML**, **CSS**, **JavaScript** y **Git** completando misiones guiadas con evaluación automática mediante IA.
 
 ---
@@ -18,6 +23,10 @@ Forge es una extensión de VS Code que convierte tu editor en una plataforma de 
 
 ## 🚀 Instalación
 
+**Opción A — Marketplace:**
+[→ Instalar desde VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=HenryDavidQuel.forge-dev)
+
+**Opción B — Desde VS Code:**
 1. Abre VS Code
 2. Ve a la pestaña de Extensiones (`Ctrl+Shift+X`)
 3. Busca **Forge - Learn to Code**
