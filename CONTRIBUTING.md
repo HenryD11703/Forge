@@ -21,34 +21,26 @@ Forge es una extensión de VS Code que convierte el editor en una plataforma de 
 
 ## Arquitectura general
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    VS Code (usuario)                    │
-│                                                         │
-│  ┌──────────────────────┐   ┌─────────────────────────┐ │
-│  │  Editor de código    │   │  Forge Sidebar (webview) │ │
-│  │  (index.html /       │   │  - Lista de módulos      │ │
-│  │   mision.js /        │   │  - Vista de ejercicio    │ │
-│  │   respuestas.md)     │   │  - Pistas revelables     │ │
-│  └──────────────────────┘   │  - Resultado de IA       │ │
-│                             └──────────┬────────────────┘ │
-└──────────────────────────────────────┼─────────────────┘
-                                        │ HTTP (fetch)
-                                        ▼
-                          ┌─────────────────────────┐
-                          │   Backend (Express.js)   │
-                          │   DigitalOcean App       │
-                          │   Platform              │
-                          └────────┬────────┬────────┘
-                                   │        │
-                          Supabase │        │ Groq API
-                                   ▼        ▼
-                          ┌──────────┐  ┌──────────────┐
-                          │PostgreSQL│  │Llama 3.3 70B │
-                          │(módulos, │  │(evaluación   │
-                          │ejercicios│  │ de código)   │
-                          │progreso) │  └──────────────┘
-                          └──────────┘
+```mermaid
+flowchart TD
+    subgraph VSCode["VS Code (usuario)"]
+        Editor["Editor de código\nindex.html / mision.js / respuestas.md"]
+        Sidebar["Forge Sidebar (webview)\n- Lista de módulos\n- Vista de ejercicio\n- Pistas revelables\n- Resultado de IA"]
+    end
+
+    subgraph Backend["Backend — DigitalOcean App Platform"]
+        Express["Express.js\n/api/modules\n/api/exercises/:slug\n/api/evaluate"]
+    end
+
+    subgraph DB["Supabase"]
+        Postgres["PostgreSQL\nmódulos · ejercicios · progreso"]
+    end
+
+    Groq["Groq API\nLlama 3.3 70B"]
+
+    Sidebar -->|"HTTP fetch"| Express
+    Express -->|"Supabase JS SDK"| Postgres
+    Express -->|"Groq SDK"| Groq
 ```
 
 **Stack completo:**
